@@ -1,16 +1,20 @@
 const express = require('express')
-const mongoose = require('mongoose')
 const cors = require('cors')
-const authRoutes = require('./routes/auth.js')
-const soccerRoutes = require('./routes/soccer.js')
+const connectDB = require('./config/database')
+require('dotenv').config()
 
 const app = express()
 
-mongoose.connect('mongodb://localhost:27017/soccer_platform')
+// Connect to Database
+connectDB()
 
+// Middleware
 app.use(cors({ credentials: true, origin: 'http://localhost:5173' }))
 app.use(express.json())
-app.use('/api/auth', authRoutes)
-app.use('/api/soccer', soccerRoutes)
 
-app.listen(3000)
+// Routes
+app.use('/api/auth', require('./routes/auth'))
+app.use('/api/soccer', require('./routes/soccer'))
+
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
