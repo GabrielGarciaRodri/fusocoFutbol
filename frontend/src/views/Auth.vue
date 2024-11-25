@@ -12,7 +12,6 @@
           <div v-if="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded">
             {{ error }}
           </div>
-          
           <form @submit.prevent="handleSubmit">
             <div v-if="!isLogin" class="space-y-6">
               <div>

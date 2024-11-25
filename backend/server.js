@@ -4,11 +4,8 @@ const connectDB = require('./config/database')
 require('dotenv').config()
 
 const app = express()
-
-// Connect to Database
 connectDB()
 
-// Middleware
 app.use(cors({ credentials: true, origin: 'http://localhost:5173' }))
 app.use(express.json())
 

@@ -1,106 +1,115 @@
 <template>
-    <div class="min-h-screen bg-gray-100">
-      <!-- Navigation -->
-      <nav class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4">
-          <div class="flex justify-between h-16">
-            <div class="flex items-center">
-              <h1 class="text-xl font-bold">Soccer Platform</h1>
-            </div>
-            <div class="flex items-center">
-              <span class="mr-4">{{ user.name }}</span>
-              <button 
-                @click="logout" 
-                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-  
-      <!-- Main Content -->
-      <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-          <!-- Soccer Matches -->
-          <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-2xl font-bold mb-4">Today's Matches</h2>
-            <div v-if="loading" class="text-center">
-              Loading matches...
-            </div>
-            <div v-else-if="matches.length === 0" class="text-center">
-              No matches available
-            </div>
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div 
-                v-for="match in matches" 
-                :key="match.id" 
-                class="border rounded p-4"
-              >
-                <div class="flex justify-between items-center mb-2">
-                  <span>{{ match.homeTeam.name }}</span>
-                  <span class="font-bold">vs</span>
-                  <span>{{ match.awayTeam.name }}</span>
-                </div>
-                <div class="text-center text-sm text-gray-500">
-                  {{ formatDate(match.utcDate) }}
-                </div>
+  <div class="min-h-screen bg-gray-100">
+    <div class="max-w-7xl mx-auto py-6 px-4">
+      <!-- Live Matches -->
+      <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-2xl font-bold mb-4">Live Matches</h2>
+        <div v-if="loadingLive" class="text-center">Loading...</div>
+        <div v-else-if="liveMatches.length === 0" class="text-center">No live matches</div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="match in liveMatches" :key="match.fixture.id" 
+               class="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+            <div class="flex justify-between items-center mb-2">
+              <div class="flex flex-col items-center w-2/5">
+                <img :src="match.teams.home.logo" class="w-8 h-8 mb-1" :alt="match.teams.home.name">
+                <span class="text-sm text-center">{{ match.teams.home.name }}</span>
+              </div>
+              <div class="flex flex-col items-center w-1/5">
+                <span class="text-xl font-bold">{{ match.goals.home }} - {{ match.goals.away }}</span>
+                <span class="text-xs text-red-600">'{{ match.fixture.status.elapsed }}</span>
+              </div>
+              <div class="flex flex-col items-center w-2/5">
+                <img :src="match.teams.away.logo" class="w-8 h-8 mb-1" :alt="match.teams.away.name">
+                <span class="text-sm text-center">{{ match.teams.away.name }}</span>
               </div>
             </div>
+            <div class="text-xs text-gray-500 text-center">
+              {{ match.league.name }} - {{ match.league.round }}
+            </div>
           </div>
         </div>
-      </main>
+      </div>
+
+      <!-- Today's Matches -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-4">Today's Matches</h2>
+        <div v-if="loadingToday" class="text-center">Loading...</div>
+        <div v-else-if="todayMatches.length === 0" class="text-center">No matches today</div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="match in todayMatches" :key="match.fixture.id" 
+               class="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+            <div class="flex justify-between items-center mb-2">
+              <div class="flex flex-col items-center w-2/5">
+                <img :src="match.teams.home.logo" class="w-8 h-8 mb-1" :alt="match.teams.home.name">
+                <span class="text-sm text-center">{{ match.teams.home.name }}</span>
+              </div>
+              <div class="flex flex-col items-center w-1/5">
+                <span class="text-sm">{{ formatTime(match.fixture.date) }}</span>
+              </div>
+              <div class="flex flex-col items-center w-2/5">
+                <img :src="match.teams.away.logo" class="w-8 h-8 mb-1" :alt="match.teams.away.name">
+                <span class="text-sm text-center">{{ match.teams.away.name }}</span>
+              </div>
+            </div>
+            <div class="text-xs text-gray-500 text-center">
+              {{ match.league.name }} - {{ match.league.round }}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </template>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+
+export default {
+  data() {
+    return {
+      liveMatches: [],
+      todayMatches: [],
+      loadingLive: true,
+      loadingToday: true,
+      error: null
+    }
+  },
   
-  <script>
-  import axios from 'axios'
-  
-  export default {
-    data() {
-      return {
-        user: {
-          name: '',
-          email: ''
-        },
-        matches: [],
-        loading: true
+  async created() {
+    await this.fetchLiveMatches()
+    await this.fetchTodayMatches()
+  },
+
+  methods: {
+    async fetchLiveMatches() {
+      try {
+        const response = await axios.get('/api/soccer/fixtures/live')
+        this.liveMatches = response.data.response
+      } catch (error) {
+        this.error = 'Error loading live matches'
+      } finally {
+        this.loadingLive = false
       }
     },
-    async created() {
-      await this.fetchUserData()
-      await this.fetchMatches()
-    },
-    methods: {
-      async fetchUserData() {
-        try {
-          const token = localStorage.getItem('token')
-          const response = await axios.get('/auth/user', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-          this.user = response.data
-        } catch (error) {
-          console.error('Error fetching user data:', error)
-        }
-      },
-      async fetchMatches() {
-        try {
-          const response = await axios.get('/soccer/matches')
-          this.matches = response.data.matches
-        } catch (error) {
-          console.error('Error fetching matches:', error)
-        } finally {
-          this.loading = false
-        }
-      },
-      formatDate(utcDate) {
-        return new Date(utcDate).toLocaleString()
-      },
-      logout() {
-        localStorage.removeItem('token')
-        this.$router.push('/')
+
+    async fetchTodayMatches() {
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        const response = await axios.get(`/api/soccer/fixtures/date/${today}`)
+        this.todayMatches = response.data.response
+      } catch (error) {
+        this.error = 'Error loading today\'s matches'
+      } finally {
+        this.loadingToday = false
       }
+    },
+
+    formatTime(dateString) {
+      return new Date(dateString).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
     }
   }
-  </script>
+}
+</script>
