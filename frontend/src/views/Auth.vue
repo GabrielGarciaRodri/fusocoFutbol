@@ -7,8 +7,12 @@
             {{ isLogin ? 'Sign in to your account' : 'Create your account' }}
           </p>
         </div>
-  
+
         <div class="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <div v-if="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded">
+            {{ error }}
+          </div>
+          
           <form @submit.prevent="handleSubmit">
             <div v-if="!isLogin" class="space-y-6">
               <div>
@@ -69,11 +73,13 @@
   
   <script>
   import axios from 'axios'
-  
+  import { auth } from '../store/auth'
   export default {
     data() {
       return {
         isLogin: true,
+        loading: false,
+        error: null,
         form: {
           name: '',
           email: '',
@@ -83,20 +89,28 @@
     },
     methods: {
       async handleSubmit() {
+        this.loading = true
+        this.error = null
+        
         try {
-          const endpoint = this.isLogin ? '/auth/login' : '/auth/register'
-          const response = await axios.post(endpoint, this.form)
-          
           if (this.isLogin) {
-            localStorage.setItem('token', response.data.token)
+            await auth.login(this.form)
             this.$router.push('/dashboard')
           } else {
+            await auth.register(this.form)
             this.isLogin = true
             this.form = { name: '', email: '', password: '' }
           }
         } catch (error) {
-          console.error('Auth failed:', error)
+          this.error = error.response?.data?.error || 'An error occurred'
+        } finally {
+          this.loading = false
         }
+      },
+      switchMode() {
+        this.isLogin = !this.isLogin
+        this.error = null
+        this.form = { name: '', email: '', password: '' }
       }
     }
   }
