@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { authApi } from '../axios'
 
 const handleError = (error) => {
   console.error('API Error:', error.response?.data || error.message)
@@ -8,7 +8,7 @@ const handleError = (error) => {
 export const auth = {
   async register(userData) {
     try {
-      await axios.post('/auth/register', userData)
+      await authApi.post('/auth/register', userData)
     } catch (error) {
       handleError(error)
     }
@@ -16,7 +16,7 @@ export const auth = {
 
   async login(credentials) {
     try {
-      const { data } = await axios.post('/auth/login', credentials)
+      const { data } = await authApi.post('/auth/login', credentials)
       localStorage.setItem('token', data.token)
       return data
     } catch (error) {
@@ -26,7 +26,7 @@ export const auth = {
 
   async getUserProfile() {
     try {
-      const { data } = await axios.get('/auth/user')
+      const { data } = await authApi.get('/auth/user')
       return data
     } catch (error) {
       handleError(error)

@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { soccerApi } from '../axios'
 
 export default {
   data() {
@@ -83,7 +83,7 @@ export default {
   methods: {
     async fetchLiveMatches() {
       try {
-        const response = await axios.get('/api/soccer/fixtures/live')
+        const response = await soccerApi.get('/api/soccer/fixtures/live')
         this.liveMatches = response.data.response
       } catch (error) {
         this.error = 'Error loading live matches'
@@ -95,7 +95,7 @@ export default {
     async fetchTodayMatches() {
       try {
         const today = new Date().toISOString().split('T')[0]
-        const response = await axios.get(`/api/soccer/fixtures/date/${today}`)
+        const response = await soccerApi.get(`/api/soccer/fixtures/date/${today}`)
         this.todayMatches = response.data.response
       } catch (error) {
         this.error = 'Error loading today\'s matches'
